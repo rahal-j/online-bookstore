@@ -1,0 +1,42 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+
+    services:
+      docker:
+        image: docker:20.10.7
+        options: --privileged
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: 3.10
+
+    - name: Install dependencies (Product Service example)
+      working-directory: ./product-service
+      run: |
+        pip install -r requirements.txt
+
+    - name: Run Unit Tests
+      working-directory: ./product-service
+      run: |
+        PYTHONPATH=. pytest
+
+    - name: Build Docker images
+      run: |
+        docker build -t user-service ./user-service
+        docker build -t product-service ./product-service
+        docker build -t order-service ./order-service
+        docker build -t notification-service ./notification-service
